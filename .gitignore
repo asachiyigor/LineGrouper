@@ -12,6 +12,12 @@ build/
 *.iws
 *.iml
 *.ipr
+*.csv
+*.csv.gz
+*.txt.gz
+.idea/vcs.xml
+.idea/workspace.xml
+.idea/tasks.xml
 out/
 !**/src/main/**/out/
 !**/src/test/**/out/
