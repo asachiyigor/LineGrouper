@@ -54,9 +54,9 @@ public class LineGrouper {
     public int processFile(String filePath, String outputPath) throws IOException {
         var result = processFileInOnePass(filePath);
         var groups = buildGroupsFromMemory(result.allLines, result.groupingValues);
-        var sortedGroups = sortGroupsByPhoneCount(groups);
-        writeResults(sortedGroups, outputPath);
-        return sortedGroups.size();
+        groups.sort((a, b) -> Integer.compare(b.size(), a.size()));
+        writeResults(groups, outputPath);
+        return groups.size();
     }
 
     private ProcessResult processFileInOnePass(String filePath) throws IOException {
@@ -73,9 +73,8 @@ public class LineGrouper {
 
                     if (lineSet.add(normalizedLine)) {
                         allLines.add(normalizedLine);
+                        parseLineAndCountValues(normalizedLine, valueFrequencies);
                     }
-
-                    parseLineAndCountValues(normalizedLine, valueFrequencies);
                 }
             }
         }
@@ -189,51 +188,6 @@ public class LineGrouper {
         }
     }
 
-    private List<List<String>> sortGroupsByPhoneCount(List<List<String>> groups) {
-        var groupsWithCounts = new ArrayList<GroupWithPhoneCount>(groups.size());
-
-        for (var group : groups) {
-            var uniqueNumbers = new HashSet<String>();
-            for (var line : group) {
-                parseLineForNumbers(line, uniqueNumbers);
-            }
-
-            if (uniqueNumbers.size() > 1) {
-                groupsWithCounts.add(new GroupWithPhoneCount(group, uniqueNumbers.size()));
-            }
-        }
-
-        groupsWithCounts.sort((a, b) -> Integer.compare(b.phoneCount, a.phoneCount));
-
-        var result = new ArrayList<List<String>>(groupsWithCounts.size());
-        for (var gwc : groupsWithCounts) {
-            result.add(gwc.group);
-        }
-
-        return result;
-    }
-
-    private void parseLineForNumbers(String line, Set<String> uniqueNumbers) {
-        int start = 0;
-        int length = line.length();
-
-        while (start < length) {
-            int end = line.indexOf(delimiterChar, start);
-            if (end == -1) {
-                end = length;
-            }
-
-            if (end > start) {
-                String number = extractValue(line, start, end);
-                if (!number.isEmpty()) {
-                    uniqueNumbers.add(number);
-                }
-            }
-
-            start = end + 1;
-        }
-    }
-
     private void writeResults(List<List<String>> groups, String outputPath) throws IOException {
         try (var writer = new BufferedWriter(new FileWriter(outputPath, StandardCharsets.UTF_8), 131072)) {
             writer.write(String.valueOf(groups.size()));
@@ -292,7 +246,6 @@ public class LineGrouper {
         return line.replace("\"", "").strip();
     }
 
-    private record GroupWithPhoneCount(List<String> group, int phoneCount) {}
     private record ProcessResult(List<String> allLines, Set<String> groupingValues) {}
 
     private static class UnionFind {
