@@ -11,14 +11,14 @@ public class LineGrouper {
     private char delimiterChar = ';';
 
     public static void main(String[] args) {
-        if (args.length < 1 || args.length > 2) {
-            System.err.println("Usage: java -jar line-grouper.jar <input_file_path> [output_file_path]");
+        if (args.length < 1 || args.length > 3) {
+            System.err.println("Usage: java -jar line-grouper.jar <input_file_path> [output_file_path] [delimiter]");
             System.exit(1);
         }
 
         var inputPath = args[0];
         var outputPath = args.length > 1 ? args[1] : "result.txt";
-        var delimiter = ";";
+        var delimiter = args.length > 2 ? args[2] : detectDelimiter(inputPath);
         var startTime = System.currentTimeMillis();
 
         try {
@@ -36,6 +36,15 @@ public class LineGrouper {
             System.err.println("Error processing file: " + e.getMessage());
             System.exit(1);
         }
+    }
+
+    private static String detectDelimiter(String filePath) {
+        if (filePath.toLowerCase().endsWith(".csv")) {
+            return ",";
+        } else if (filePath.toLowerCase().endsWith(".gz")) {
+            return ";";
+        }
+        return ";";
     }
 
     public void setDelimiter(String delimiter) {
